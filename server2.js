@@ -1,5 +1,5 @@
 var express = require('express');
-var { graphHTTP }  = require('express-graphql');
+const { graphqlHTTP } = require('express-graphql')
 var { buildSchema } = require('graphql');
 
 // GraphQL schema
@@ -67,10 +67,12 @@ var root = {
 };
 
 // Create an express server and a GraphQL endpoint
-var app = express();
-app.use('/graphql', graphHTTP({
+const app = express();
+app.use('/graphql',
+ graphqlHTTP({
     schema: schema,
     rootValue: root,
     graphiql: true
-}));
+}),
+);
 app.listen(4000, () => console.log('Express GraphQL Server Now Running On localhost:4000/graphql'));
