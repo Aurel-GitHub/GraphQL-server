@@ -1,22 +1,25 @@
 var express = require('express');
-const { graphqlHTTP } = require('express-graphql')
-var { buildSchema } = require('graphql');
+let { graphqlHTTP } = require('express-graphql');
+var {buildSchema} = require('graphql');
 
-// GraphQL schema
-// var schema = buildSchema(`
-//     type Query {
-//         course(id: Int!): Course
-//         courses(topic: String): [Course]
-//     },
-//     type Course {
-//         id: Int
-//         title: String
-//         author: String
-//         description: String
-//         topic: String
-//         url: String
-//     }
-// `);
+// GraphQL Schema
+var schema = buildSchema(`
+    type Query {
+        course(id: Int!): Course
+        courses(topic: String): [Course]
+    }
+    type Mutation {
+        updateCourseTopic(id: Int!, topic: String!): Course
+    }
+    type Course {
+        id: Int
+        title: String
+        author: String
+        description: String
+        topic: String
+        url: String
+    }
+`);
 
 var coursesData = [
     {
@@ -45,7 +48,7 @@ var coursesData = [
     }
 ]
 
-var getCourse = function(args) { 
+var getCourse = function(args) {
     var id = args.id;
     return coursesData.filter(course => {
         return course.id == id;
@@ -61,40 +64,6 @@ var getCourses = function(args) {
     }
 }
 
-var root = {
-    course: getCourse,
-    courses: getCourses
-};
-
-// Create an express server and a GraphQL endpoint
-const app = express();
-app.use('/graphql',
- graphqlHTTP({
-    schema: schema,
-    rootValue: root,
-    graphiql: true
-}),
-);
-
-// GraphQL schema
-var schema = buildSchema(`
-    type Query {
-        course(id: Int!): Course
-        courses(topic: String): [Course]
-    },
-    type Mutation {
-        updateCourseTopic(id: Int!, topic: String!): Course
-    }
-    type Course {
-        id: Int
-        title: String
-        author: String
-        description: String
-        topic: String
-        url: String
-    }
-`);
-
 var updateCourseTopic = function({id, topic}) {
     coursesData.map(course => {
         if (course.id === id) {
@@ -102,13 +71,24 @@ var updateCourseTopic = function({id, topic}) {
             return course;
         }
     });
-    return coursesData.filter(course => course.id === id) [0];
+    return coursesData.filter(course => course.id === id)[0];
 }
 
+// Root resolver
 var root = {
     course: getCourse,
     courses: getCourses,
     updateCourseTopic: updateCourseTopic
 };
+
+// Create an expres server and a GraphQL endpoint
+var app = express();
+app.use('/graphql',
+ graphqlHTTP({
+    schema: schema,
+    rootValue: root,
+    graphiql: true
+}),
+);
 
 app.listen(4000, () => console.log('Express GraphQL Server Now Running On localhost:4000/graphql'));
