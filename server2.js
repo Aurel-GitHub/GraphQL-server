@@ -1,16 +1,18 @@
-var express = require('express');
-let { graphqlHTTP } = require('express-graphql');
-var {buildSchema} = require('graphql');
+const express = require('express');
+const {graphqlHTTP} = require('express-graphql');
+const {buildSchema} = require('graphql');
 
-// GraphQL Schema
-var schema = buildSchema(`
+// GraphQL schema
+let schema = buildSchema(`
     type Query {
         course(id: Int!): Course
         courses(topic: String): [Course]
-    }
+        coursesByTitle(title: String!): [Course]
+    },
     type Mutation {
         updateCourseTopic(id: Int!, topic: String!): Course
-    }
+        addCourse(id: Int!, title: String, author: String, description: String, topic: String, url: String): [Course]
+    },
     type Course {
         id: Int
         title: String
@@ -21,7 +23,7 @@ var schema = buildSchema(`
     }
 `);
 
-var coursesData = [
+const coursesData = [
     {
         id: 1,
         title: 'The Complete Node.js Developer Course',
@@ -48,47 +50,62 @@ var coursesData = [
     }
 ]
 
-var getCourse = function(args) {
-    var id = args.id;
+const getCourse = function (args) {
+    const id = args.id;
     return coursesData.filter(course => {
-        return course.id == id;
+        return course.id === id;
     })[0];
 }
 
-var getCourses = function(args) {
+const getCourses = function (args) {
     if (args.topic) {
-        var topic = args.topic;
+        const topic = args.topic;
         return coursesData.filter(course => course.topic === topic);
     } else {
         return coursesData;
     }
 }
 
-var updateCourseTopic = function({id, topic}) {
+const getCoursesByTitle = function (args) {
+    const queryTitle = args.title;
+    return coursesData.filter(course => course.title.includes(queryTitle));
+}
+
+const updateCourseTopic = function ({id, topic}) {
     coursesData.map(course => {
         if (course.id === id) {
             course.topic = topic;
             return course;
         }
     });
-    return coursesData.filter(course => course.id === id)[0];
+    return coursesData.filter(course => course.id === id) [0];
 }
 
-// Root resolver
-var root = {
+const addCourse = function (args) {
+    const newCourse = {
+        "title": args.title,
+        "author": args.author,
+        "description": args.description,
+        "topic": args.topic,
+        "url": args.url
+    }
+    coursesData.push(newCourse)
+    return coursesData;
+}
+
+const root = {
     course: getCourse,
     courses: getCourses,
-    updateCourseTopic: updateCourseTopic
+    coursesByTitle: getCoursesByTitle,
+    updateCourseTopic: updateCourseTopic,
+    addCourse: addCourse
 };
 
-// Create an expres server and a GraphQL endpoint
-var app = express();
-app.use('/graphql',
- graphqlHTTP({
+// Create an express server and a GraphQL endpoint
+const app = express();
+app.use('/graphql2', graphqlHTTP({
     schema: schema,
     rootValue: root,
     graphiql: true
-}),
-);
-
-app.listen(4000, () => console.log('Express GraphQL Server Now Running On localhost:4000/graphql'));
+}));
+app.listen(4002, () => console.log('Express GraphQL Server Now Running On localhost:4002/graphql2'));
